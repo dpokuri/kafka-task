@@ -24,8 +24,7 @@ import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-import com.david.kafkatask.model.Customer;
-import com.david.kafkatask.model.Driver;
+import com.david.kafkatask.model.Model;
 
 
 @Configuration
@@ -61,35 +60,35 @@ public class KafkaConfig {
 	  }
 
 	  @Bean
-	  public ProducerFactory<String,Driver> producerFactory() {
+	  public ProducerFactory<String,Model> producerFactory() {
 	    return new DefaultKafkaProducerFactory<>(producerConfigs());
 	  }
 	  
 	  @Bean
-	  public KafkaTemplate<String, Driver> kafkaTemplate() {
+	  public KafkaTemplate<String, Model> kafkaTemplate() {
 	    return new KafkaTemplate<>(producerFactory());
 	  }
 	  
 	  @Bean
-	  public ReplyingKafkaTemplate<String, Customer, Driver> replyKafkaTemplate(ProducerFactory<String, Customer> pf, KafkaMessageListenerContainer<String, Driver> container){
+	  public ReplyingKafkaTemplate<String, Model, Model> replyKafkaTemplate(ProducerFactory<String, Model> pf, KafkaMessageListenerContainer<String, Model> container){
 		  return new ReplyingKafkaTemplate<>(pf, container);
 		  
 	  }
 	  
 	  @Bean
-	  public KafkaMessageListenerContainer<String, Driver> replyContainer(ConsumerFactory<String, Driver> cf) {
+	  public KafkaMessageListenerContainer<String, Model> replyContainer(ConsumerFactory<String, Model> cf) {
 	        ContainerProperties containerProperties = new ContainerProperties(requestReplyTopic);
 	        return new KafkaMessageListenerContainer<>(cf, containerProperties);
 	    }
 	  
 	  @Bean
-	  public ConsumerFactory<String, Driver> consumerFactory() {
-	    return new DefaultKafkaConsumerFactory<>(consumerConfigs(),new StringDeserializer(),new JsonDeserializer<>(Driver.class));
+	  public ConsumerFactory<String, Model> consumerFactory() {
+	    return new DefaultKafkaConsumerFactory<>(consumerConfigs(),new StringDeserializer(),new JsonDeserializer<>(Model.class));
 	  }
 	  
 	  @Bean
-	  public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Driver>> kafkaListenerContainerFactory() {
-	    ConcurrentKafkaListenerContainerFactory<String, Driver> factory = new ConcurrentKafkaListenerContainerFactory<>();
+	  public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Model>> kafkaListenerContainerFactory() {
+	    ConcurrentKafkaListenerContainerFactory<String, Model> factory = new ConcurrentKafkaListenerContainerFactory<>();
 	    factory.setConsumerFactory(consumerFactory());
 	    factory.setReplyTemplate(kafkaTemplate());
 	    return factory;

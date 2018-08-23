@@ -7,7 +7,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.requestreply.RequestReplyFuture;
@@ -19,15 +19,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.david.kafkatask.model.Customer;
-import com.david.kafkatask.model.Driver;
+import com.david.kafkatask.model.Model;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/api")
 public class CustomerDriverController {
 	
 	@Autowired
-	ReplyingKafkaTemplate<String, Customer,Driver> kafkaTemplate;
+	ReplyingKafkaTemplate<String, Model,Model> kafkaTemplate;
 	
 	@Value("${kafka.topic.request-topic}")
 	String requestTopic;
@@ -36,33 +36,30 @@ public class CustomerDriverController {
 	String requestReplyTopic;
 	
 	
-	@PostMapping(value="/sum",produces=MediaType.APPLICATION_JSON_VALUE,consumes=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Driver> sum(@RequestBody Customer request) throws InterruptedException, ExecutionException {
+	@PostMapping("/drivers")
+	public ResponseEntity<Model> sum(@RequestBody Model request) throws InterruptedException, ExecutionException {
 		// create producer record
-		ProducerRecord<String, Customer> record = new ProducerRecord<String, Customer>(requestTopic, request);
+		ProducerRecord<String, Model> record = new ProducerRecord<String, Model>(requestTopic, request);
 		// set reply topic in header
 		record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, requestReplyTopic.getBytes()));
 		// post in kafka topic
-		RequestReplyFuture<String, Customer, Driver> sendAndReceive = kafkaTemplate.sendAndReceive(record);
+		RequestReplyFuture<String, Model, Model> sendAndReceive = kafkaTemplate.sendAndReceive(record);
 
 		// confirm if producer produced successfully
-		SendResult<String, Customer> sendResult = sendAndReceive.getSendFuture().get();
+		SendResult<String, Model> sendResult = sendAndReceive.getSendFuture().get();
 		
 		//print all headers
 		sendResult.getProducerRecord().headers().forEach(header -> System.out.println(header.key() + ":" + header.value().toString()));
 		
 		// get consumer record
-		ConsumerRecord<String, Driver> consumerRecord = sendAndReceive.get();
+		ConsumerRecord<String, Model> consumerRecord = sendAndReceive.get();
 		// return consumer value
-		//return consumerRecord.value();
-		return new ResponseEntity<Driver>(consumerRecord.value(), null);
+		return new ResponseEntity<Model>(consumerRecord.value(), HttpStatus.OK);		
 	}
 	
-	@GetMapping("/msg")
-	public String getMsg() {
-		
-		return "Test message";
-		
+	@GetMapping("test")
+	public String msg() {
+		return "Testing string";
 	}
 
 }
